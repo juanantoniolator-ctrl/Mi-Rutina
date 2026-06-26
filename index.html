@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#16181D">
+<title>Mi Rutina</title>
+
+<!-- ====== PWA: manifest embebido como data URI ====== -->
+<link rel="manifest" id="manifest-link">
+<link rel="apple-touch-icon" id="apple-touch-icon">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Rutina">
+
+<style>
+/* ===========================================================
+   TOKENS DE DISEÑO
+   =========================================================== */
+:root{
+  --bg:#16181D;
+  --bg-card:#1E2128;
+  --bg-card-hover:#262A33;
+  --line:#2C2F38;
+  --text:#F2F1ED;
+  --text-dim:#8B8D93;
+  --accent:#FF5A1F;
+  --accent-dim:#7A3015;
+  --good:#9FE870;
+  --good-dim:#2E3B22;
+  --radius:14px;
+  --radius-sm:8px;
+  --ff-display:'Oswald-fallback', 'Arial Narrow', Impact, sans-serif;
+  --ff-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:var(--ff-body); overscroll-behavior-y:none;}
+body{
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:env(safe-area-inset-bottom);
+  min-height:100vh;
+}
+h1,h2,h3,.num{font-family:var(--ff-display); font-weight:700; letter-spacing:0.02em; text-transform:uppercase;}
+button{font-family:inherit; border:none; background:none; color:inherit; cursor:pointer;}
+input,select,textarea{font-family:inherit; color:var(--text); background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; font-size:16px;}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent); outline-offset:1px;}
+a{color:var(--accent);}
+::selection{background:var(--accent); color:#fff;}
+
+/* Scrollbar discreto */
+::-webkit-scrollbar{width:6px; height:6px;}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:3px;}
+
+/* ===========================================================
+   LAYOUT GENERAL
+   =========================================================== */
+#app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative;}
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 18px 10px;
+  position:sticky; top:0; z-index:20;
+  background:linear-gradient(to bottom, var(--bg) 80%, transparent);
+}
+.brand{display:flex; align-items:center; gap:10px;}
+.brand-name{font-size:15px; letter-spacing:0.12em; color:var(--text-dim);}
+.icon-btn{
+  width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+  border-radius:50%; transition:background .15s ease;
+}
+.icon-btn:active{background:var(--bg-card-hover);}
+
+main{flex:1; padding:0 18px 100px;}
+
+.screen{display:none; animation:fadeIn .25s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* ===========================================================
+   LOGO (mancuerna minimalista) — usado en splash, header, favicon
+   =========================================================== */
+.logo-mark{display:block;}
+.logo-mark .bar{fill:var(--accent);}
+.logo-mark .plate{fill:var(--text);}
+.logo-mark.filled .plate{fill:var(--good); transition:fill .3s ease;}
+
+/* ===========================================================
+   HOME
+   =========================================================== */
+.hero{padding:6px 0 22px;}
+.hero-greeting{color:var(--text-dim); font-size:14px; margin:0 0 2px;}
+.hero-title{font-size:30px; margin:0; line-height:1.05;}
+.hero-sub{color:var(--text-dim); font-size:13px; margin-top:6px;}
+
+.stat-row{display:flex; gap:10px; margin-bottom:24px;}
+.stat-card{
+  flex:1; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px 12px; text-align:center;
+}
+.stat-card .num{font-size:26px; color:var(--accent); display:block; line-height:1;}
+.stat-card .lbl{font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin-top:4px; display:block;}
+
+.section-label{
+  font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.1em;
+  margin:0 0 12px; display:flex; align-items:center; gap:8px;
+}
+.section-label::after{content:''; flex:1; height:1px; background:var(--line);}
+
+.day-list{display:flex; flex-direction:column; gap:10px;}
+.day-card{
+  background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px; display:flex; align-items:center; gap:14px; cursor:pointer;
+  transition:background .15s ease, transform .1s ease;
+}
+.day-card:active{background:var(--bg-card-hover); transform:scale(0.99);}
+.day-date{
+  width:50px; flex:none; text-align:center; line-height:1.1;
+}
+.day-date .dnum{font-family:var(--ff-display); font-size:22px; display:block; color:var(--text);}
+.day-date .dmon{font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.05em;}
+.day-info{flex:1; min-width:0;}
+.day-info .dgroup{font-size:15px; font-weight:600; margin:0 0 2px;}
+.day-info .dmeta{font-size:12px; color:var(--text-dim); margin:0;}
+.day-chevron{color:var(--text-dim); flex:none;}
+
+.empty-state{
+  text-align:center; padding:50px 20px; color:var(--text-dim);
+}
+.empty-state svg{margin-bottom:14px; opacity:.5;}
+.empty-state p{font-size:14px; line-height:1.5; max-width:280px; margin:0 auto;}
+
+/* ===========================================================
+   DETALLE DE DÍA
+   =========================================================== */
+.back-row{display:flex; align-items:center; gap:10px; padding:14px 0 4px; cursor:pointer;}
+.back-row span{font-size:14px; color:var(--text-dim);}
+.day-header{padding:10px 0 18px;}
+.day-header h1{font-size:24px; margin:0 0 4px;}
+.day-header .dh-sub{color:var(--text-dim); font-size:13px;}
+.day-header .dh-tag{
+  display:inline-block; background:var(--accent-dim); color:var(--accent);
+  font-size:11px; text-transform:uppercase; letter-spacing:0.05em; padding:3px 9px; border-radius:20px; margin-top:10px;
+}
+
+.ex-list{display:flex; flex-direction:column; gap:10px;}
+.ex-card{
+  background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:14px 16px; cursor:pointer; transition:background .15s ease;
+  display:flex; align-items:center; gap:12px;
+}
+.ex-card:active{background:var(--bg-card-hover);}
+.ex-card .ex-dumbbell{flex:none;}
+.ex-card .ex-info{flex:1; min-width:0;}
+.ex-card .ex-name{font-size:15px; font-weight:600; margin:0 0 4px;}
+.ex-card .ex-meta{font-size:13px; color:var(--text-dim); display:flex; gap:10px; flex-wrap:wrap;}
+.ex-card .ex-meta b{color:var(--text);}
+.ex-trend{flex:none; font-size:12px; padding:3px 8px; border-radius:20px; font-weight:600;}
+.ex-trend.up{background:var(--good-dim); color:var(--good);}
+.ex-trend.flat{background:var(--line); color:var(--text-dim);}
+
+/* ===========================================================
+   FICHA DE EJERCICIO
+   =========================================================== */
+.ex-header{padding:10px 0 16px;}
+.ex-header h1{font-size:22px; margin:0 0 6px; text-transform:none;}
+.ex-header .base{color:var(--text-dim); font-size:13px;}
+
+.chart-card{
+  background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px; margin-bottom:18px;
+}
+.chart-card .chart-title{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.06em; margin:0 0 10px;}
+.chart-card svg{width:100%; height:auto; display:block;}
+
+.log-list{display:flex; flex-direction:column; gap:8px; margin-bottom:90px;}
+.log-item{
+  background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-sm);
+  padding:12px 14px; display:flex; align-items:center; gap:12px;
+}
+.log-item.is-best{border-color:var(--good); background:linear-gradient(90deg, var(--good-dim), var(--bg-card) 40%);}
+.log-item .log-date{flex:none; width:60px; font-size:12px; color:var(--text-dim); line-height:1.3;}
+.log-item .log-date b{display:block; color:var(--text); font-size:14px;}
+.log-item .log-data{flex:1; font-size:14px; display:flex; gap:14px; flex-wrap:wrap;}
+.log-item .log-data span{color:var(--text-dim); font-size:11px; text-transform:uppercase; display:block;}
+.log-item .log-data b{font-size:15px; color:var(--text); font-weight:700;}
+.log-item .log-note{flex:1 0 100%; font-size:12px; color:var(--text-dim); font-style:italic; margin-top:2px;}
+.star-badge{flex:none; font-size:16px;}
+
+.fab-register{
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  width:min(484px, calc(100% - 36px));
+  background:var(--accent); color:#fff; border-radius:50px;
+  padding:16px; font-size:16px; font-weight:700; text-align:center;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  box-shadow:0 8px 24px rgba(255,90,31,0.35);
+  z-index:30; letter-spacing:0.02em;
+  transition:transform .12s ease;
+}
+.fab-register:active{transform:translateX(-50%) scale(0.97);}
+
+/* ===========================================================
+   MENU LATERAL
+   =========================================================== */
+.overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:90;
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+.overlay.open{opacity:1; pointer-events:auto;}
+.side-menu{
+  position:fixed; top:0; left:0; height:100%; width:78%; max-width:300px;
+  background:var(--bg-card); z-index:95; transform:translateX(-100%);
+  transition:transform .25s cubic-bezier(.2,.9,.3,1); padding:24px 20px;
+  display:flex; flex-direction:column; gap:4px;
+  box-shadow:6px 0 30px rgba(0,0,0,0.4);
+}
+.side-menu.open{transform:translateX(0);}
+.side-menu .sm-head{display:flex; align-items:center; gap:10px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--line);}
+.side-menu .sm-head .sm-name{font-size:16px; font-weight:700;}
+.side-menu .sm-head .sm-sub{font-size:12px; color:var(--text-dim);}
+.sm-item{
+  display:flex; align-items:center; gap:14px; padding:13px 10px; border-radius:var(--radius-sm);
+  font-size:15px; color:var(--text); text-align:left; transition:background .15s ease;
+}
+.sm-item:active{background:var(--bg-card-hover);}
+.sm-item.danger{color:#FF6B6B; margin-top:auto;}
+
+/* ===========================================================
+   MODAL DE REGISTRO
+   =========================================================== */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+.modal-overlay.open{opacity:1; pointer-events:auto;}
+.modal-sheet{
+  background:var(--bg-card); width:100%; max-width:520px; border-radius:20px 20px 0 0;
+  padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.2,.9,.3,1);
+  max-height:85vh; overflow-y:auto;
+}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-sheet h2{font-size:18px; margin:0 0 4px; text-transform:none;}
+.modal-sheet .modal-sub{color:var(--text-dim); font-size:13px; margin-bottom:18px;}
+.field-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.04em;}
+.field input, .field textarea{width:100%;}
+.modal-actions{display:flex; gap:10px; margin-top:6px;}
+.btn{
+  flex:1; padding:14px; border-radius:var(--radius-sm); font-size:15px; font-weight:700; text-align:center;
+  transition:transform .1s ease, opacity .15s ease;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--accent); color:#fff;}
+.btn-ghost{background:var(--line); color:var(--text);}
+.btn-danger{background:#B23A3A; color:#fff;}
+
+/* Botón compartir/PDF en headers */
+.share-btn{
+  display:inline-flex; align-items:center; gap:6px;
+  margin-top:12px; padding:8px 14px; border-radius:20px;
+  background:var(--bg-card); border:1px solid var(--line);
+  font-size:13px; color:var(--text); transition:background .15s ease;
+}
+.share-btn:active{background:var(--bg-card-hover);}
+.header-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+
+/* Vista de impresión: oculta en pantalla, se llena al exportar */
+#print-area{display:none;}
+
+@media print{
+  body *{visibility:hidden;}
+  #print-area, #print-area *{visibility:visible;}
+  #print-area{
+    display:block; position:absolute; top:0; left:0; width:100%;
+    background:#fff; color:#111; padding:20px; font-family:Arial, sans-serif;
+  }
+  #print-area h1{font-size:20px; margin:0 0 4px; text-transform:none;}
+  #print-area .p-sub{color:#555; font-size:13px; margin:0 0 18px;}
+  #print-area table{width:100%; border-collapse:collapse; margin-bottom:6px;}
+  #print-area th, #print-area td{border:1px solid #ccc; padding:7px 9px; font-size:13px; text-align:left;}
+  #print-area th{background:#f0f0f0;}
+  #print-area .p-best{font-weight:700;}
+  #print-area .p-footer{margin-top:18px; font-size:11px; color:#777;}
+}
+
+/* Toast */
+.toast{
+  position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--good); color:#16330a; padding:12px 20px; border-radius:30px;
+  font-size:14px; font-weight:700; z-index:200; opacity:0; pointer-events:none;
+  transition:all .25s cubic-bezier(.2,.9,.3,1); white-space:nowrap; box-shadow:0 6px 20px rgba(0,0,0,0.3);
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* Pantallas secundarias (datos, ayuda, config) */
+.form-block{display:flex; flex-direction:column; gap:14px; margin-bottom:24px;}
+.form-row{display:flex; flex-direction:column; gap:6px;}
+.form-row label{font-size:12px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.04em;}
+.help-card{background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:12px;}
+.help-card h3{font-size:14px; margin:0 0 6px; text-transform:none;}
+.help-card p{font-size:13px; color:var(--text-dim); margin:0; line-height:1.5;}
+.theme-options{display:flex; gap:10px;}
+.theme-opt{
+  flex:1; padding:14px; text-align:center; border-radius:var(--radius); border:1px solid var(--line);
+  background:var(--bg-card); font-size:13px; cursor:pointer;
+}
+.theme-opt.active{border-color:var(--accent); color:var(--accent);}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ TOPBAR ============ -->
+  <div class="topbar">
+    <button class="icon-btn" onclick="openMenu()" aria-label="Abrir menú">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#F2F1ED" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="brand">
+      <svg class="logo-mark" width="26" height="26" viewBox="0 0 48 48"><rect class="bar" x="14" y="21" width="20" height="6" rx="1"/><rect class="plate" x="4" y="14" width="8" height="20" rx="2"/><rect class="plate" x="36" y="14" width="8" height="20" rx="2"/></svg>
+      <span class="brand-name">MI RUTINA</span>
+    </div>
+    <div style="width:40px;"></div>
+  </div>
+
+  <main>
+
+    <!-- ============ SCREEN: HOME ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="hero">
+        <p class="hero-greeting" id="home-greeting">Hola</p>
+        <h1 class="hero-title" id="home-name">Tu progreso</h1>
+        <p class="hero-sub">Consultá tus entrenamientos y registrá tu avance.</p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card"><span class="num" id="stat-sesiones">0</span><span class="lbl">Sesiones</span></div>
+        <div class="stat-card"><span class="num" id="stat-ejercicios">0</span><span class="lbl">Ejercicios</span></div>
+        <div class="stat-card"><span class="num" id="stat-mejoras">0</span><span class="lbl">Mejoras</span></div>
+      </div>
+
+      <p class="section-label">Días entrenados</p>
+      <div class="day-list" id="day-list"></div>
+    </section>
+
+    <!-- ============ SCREEN: DETALLE DE DÍA ============ -->
+    <section class="screen" id="screen-day">
+      <div class="back-row" onclick="goHome()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Volver a inicio</span>
+      </div>
+      <div class="day-header">
+        <h1 id="dd-title">—</h1>
+        <p class="dh-sub" id="dd-sub">—</p>
+        <div class="header-actions">
+          <span class="dh-tag" id="dd-tag">—</span>
+          <button class="share-btn" onclick="shareDay()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Compartir / PDF
+          </button>
+        </div>
+      </div>
+      <div class="ex-list" id="dd-ex-list"></div>
+    </section>
+
+    <!-- ============ SCREEN: FICHA DE EJERCICIO ============ -->
+    <section class="screen" id="screen-exercise">
+      <div class="back-row" onclick="backToDay()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="ex-back-label">Volver</span>
+      </div>
+      <div class="ex-header">
+        <h1 id="ex-title">—</h1>
+        <p class="base" id="ex-base">—</p>
+        <div class="header-actions">
+          <button class="share-btn" onclick="shareExercise()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M16 6l-4-4-4 4M12 2v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Compartir / PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <p class="chart-title">Evolución de peso</p>
+        <div id="ex-chart"></div>
+      </div>
+
+      <p class="section-label">Historial</p>
+      <div class="log-list" id="ex-log-list"></div>
+    </section>
+
+    <!-- ============ SCREEN: MIS DATOS ============ -->
+    <section class="screen" id="screen-datos">
+      <div class="back-row" onclick="goHome()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Volver a inicio</span>
+      </div>
+      <div class="day-header"><h1>Mis datos</h1><p class="dh-sub">Se guardan automáticamente</p></div>
+      <div class="form-block">
+        <div class="form-row"><label>Nombre y apellido</label><input id="d-nombre" type="text" placeholder="Tu nombre" oninput="saveDatos()"></div>
+        <div class="field-grid" style="margin-bottom:0;">
+          <div class="form-row"><label>Edad</label><input id="d-edad" type="number" placeholder="—" oninput="saveDatos()"></div>
+          <div class="form-row"><label>Sexo</label>
+            <select id="d-sexo" onchange="saveDatos()">
+              <option value="">—</option><option>Femenino</option><option>Masculino</option><option>Otro</option>
+            </select>
+          </div>
+          <div class="form-row"><label>Altura (cm)</label><input id="d-altura" type="number" placeholder="—" oninput="saveDatos()"></div>
+          <div class="form-row"><label>Peso (kg)</label><input id="d-peso" type="number" step="0.1" placeholder="—" oninput="saveDatos()"></div>
+        </div>
+        <div class="form-row"><label>Objetivo de entrenamiento</label><input id="d-objetivo" type="text" placeholder="Ej: tonificar, fuerza..." oninput="saveDatos()"></div>
+        <div class="form-row"><label>Nivel de experiencia</label>
+          <select id="d-nivel" onchange="saveDatos()">
+            <option value="">—</option><option>Principiante</option><option>Intermedio</option><option>Avanzado</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Fecha de inicio</label><input id="d-fecha" type="date" oninput="saveDatos()"></div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: CONFIGURACIÓN ============ -->
+    <section class="screen" id="screen-config">
+      <div class="back-row" onclick="goHome()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Volver a inicio</span>
+      </div>
+      <div class="day-header"><h1>Configuración</h1><p class="dh-sub">Elegí cómo se ve la app</p></div>
+      <p class="section-label">Tema</p>
+      <div class="theme-options" id="theme-options">
+        <div class="theme-opt" data-theme="dark" onclick="setTheme('dark')">Oscuro</div>
+        <div class="theme-opt" data-theme="light" onclick="setTheme('light')">Claro</div>
+        <div class="theme-opt" data-theme="auto" onclick="setTheme('auto')">Automático</div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: AYUDA ============ -->
+    <section class="screen" id="screen-ayuda">
+      <div class="back-row" onclick="goHome()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Volver a inicio</span>
+      </div>
+      <div class="day-header"><h1>Ayuda</h1></div>
+      <div class="help-card"><h3>Consultar mi rutina</h3><p>Tocá un día en Inicio para ver los ejercicios de esa sesión.</p></div>
+      <div class="help-card"><h3>Registrar avance</h3><p>Abrí un ejercicio y tocá "Registrar avance de hoy" para anotar el peso, las series y repeticiones que hiciste.</p></div>
+      <div class="help-card"><h3>Ver evolución</h3><p>En la ficha de cada ejercicio vas a ver un gráfico y una lista con todo tu historial, marcando con una estrella tu mejor marca.</p></div>
+      <div class="help-card"><h3>Instalar la app</h3><p>En Android: menú del navegador → "Agregar a pantalla de inicio". En iPhone: botón compartir → "Agregar a pantalla de inicio".</p></div>
+      <div class="help-card"><h3>Borrar todo</h3><p>Desde el menú lateral podés borrar todos los datos guardados si querés empezar de cero.</p></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ OVERLAY + MENÚ LATERAL ============ -->
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<nav class="side-menu" id="side-menu">
+  <div class="sm-head">
+    <svg class="logo-mark" width="32" height="32" viewBox="0 0 48 48"><rect class="bar" x="14" y="21" width="20" height="6" rx="1"/><rect class="plate" x="4" y="14" width="8" height="20" rx="2"/><rect class="plate" x="36" y="14" width="8" height="20" rx="2"/></svg>
+    <div><div class="sm-name">Mi Rutina</div><div class="sm-sub">Consulta y progreso</div></div>
+  </div>
+  <button class="sm-item" onclick="goHome(); closeMenu();">🏠 &nbsp;Inicio</button>
+  <button class="sm-item" onclick="showScreen('screen-datos'); closeMenu();">🧍 &nbsp;Mis datos</button>
+  <button class="sm-item" onclick="showScreen('screen-config'); closeMenu();">⚙️ &nbsp;Configuración</button>
+  <button class="sm-item" onclick="showScreen('screen-ayuda'); closeMenu();">❓ &nbsp;Ayuda</button>
+  <button class="sm-item danger" onclick="confirmClearAll(); closeMenu();">🗑️ &nbsp;Borrar todos los datos</button>
+</nav>
+
+<!-- ============ MODAL: REGISTRAR AVANCE ============ -->
+<div class="modal-overlay" id="modal-register" onclick="if(event.target===this) closeModal()">
+  <div class="modal-sheet">
+    <h2 id="modal-ex-name">Registrar avance</h2>
+    <p class="modal-sub" id="modal-ex-base">Última marca: —</p>
+    <div class="field-grid">
+      <div class="field"><label>Peso (kg)</label><input id="r-peso" type="number" step="0.5" placeholder="0" inputmode="decimal"></div>
+      <div class="field"><label>Series</label><input id="r-series" type="number" placeholder="3" inputmode="numeric"></div>
+      <div class="field"><label>Repeticiones</label><input id="r-reps" type="text" placeholder="10" inputmode="numeric"></div>
+      <div class="field"><label>Fecha</label><input id="r-fecha" type="date"></div>
+    </div>
+    <div class="field" style="margin-bottom:16px;">
+      <label>Observaciones (opcional)</label>
+      <textarea id="r-obs" rows="2" placeholder="Cómo te sentiste, si te costó, etc."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRegistro()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: CONFIRMAR BORRADO ============ -->
+<div class="modal-overlay" id="modal-confirm" onclick="if(event.target===this) closeConfirm()">
+  <div class="modal-sheet">
+    <h2>¿Borrar todos los datos?</h2>
+    <p class="modal-sub">Esta acción eliminará todos los datos almacenados y no podrá deshacerse. ¿Desea continuar?</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" onclick="executeClearAll()">Eliminar definitivamente</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ELEGIR CÓMO COMPARTIR ============ -->
+<div class="modal-overlay" id="modal-share" onclick="if(event.target===this) closeShareChoice()">
+  <div class="modal-sheet">
+    <h2>¿Cómo querés compartirlo?</h2>
+    <p class="modal-sub">Elegí una opción</p>
+    <div class="modal-actions" style="flex-direction:column;">
+      <button class="btn btn-primary" style="width:100%; margin-bottom:10px;" onclick="confirmShareChoice('share')">📤 &nbsp;Compartir (WhatsApp, correo, etc.)</button>
+      <button class="btn btn-ghost" style="width:100%;" onclick="confirmShareChoice('pdf')">🖨️ &nbsp;Descargar / Guardar como PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="print-area"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===========================================================
+   MÓDULO: DATOS BASE (rutina precargada desde el PDF del usuario)
+   =========================================================== */
+const RUTINA_BASE = {"sesiones": [{"fecha": "2026-06-08", "dia": "Lunes", "grupo": "Posteriores", "ejercicios": [{"nombre": "Camilla isquio", "series": "4x15", "peso": "20 kg"}, {"nombre": "Peso muerto", "series": "3x12", "peso": "25 kg"}, {"nombre": "Búlgaras", "series": "3x10", "peso": "7,5 kg"}, {"nombre": "Multi cadera", "series": "3x15", "peso": "25 kg"}, {"nombre": "Abductores", "series": "4x10", "peso": "45-50 kg"}]}, {"fecha": "2026-06-09", "dia": "Martes", "grupo": "Tren superior", "ejercicios": [{"nombre": "Jalón pecho", "series": "3x10", "peso": "25 kg"}, {"nombre": "Remo bajo polea", "series": "3x10", "peso": "15-20 kg"}, {"nombre": "Remo unilateral mancuerna", "series": "3x12", "peso": "7 kg"}, {"nombre": "Vuelo unilateral (hombro)", "series": "4x10", "peso": "4 kg"}, {"nombre": "Vuelo frontal (hombro)", "series": "3x12-15", "peso": "5 kg disco"}, {"nombre": "Press en máquina (hombro)", "series": "3x10", "peso": "5 kg (2 discos 2,5)"}]}, {"fecha": "2026-06-10", "dia": "Miércoles", "grupo": "Piernas", "ejercicios": [{"nombre": "Camilla adelante (retención 3s)", "series": "4x10", "peso": "30 kg"}, {"nombre": "Abductores en polea", "series": "4x12", "peso": "40 kg"}, {"nombre": "Prensa", "series": "3x10", "peso": "70 kg"}, {"nombre": "Pantorrillas", "series": "3x10", "peso": "20 kg"}, {"nombre": "Estocadas", "series": "3x10", "peso": "7,5 kg"}]}, {"fecha": "2026-06-15", "dia": "Lunes", "grupo": "Pecho y brazos", "ejercicios": [{"nombre": "Pecho con barra", "series": "4x10", "peso": "3,5-5 kg c/l"}, {"nombre": "Mariposa", "series": "2x15 / 2x12", "peso": "15-20 kg"}, {"nombre": "Remo pecho", "series": "3x10", "peso": "7,5 kg por lado"}, {"nombre": "Tríceps polea barrita", "series": "4x10", "peso": "6,25 kg"}, {"nombre": "Tríceps mancuernas", "series": "3x10-12", "peso": "4 kg"}, {"nombre": "Bíceps mancuernas", "series": "3x12", "peso": "5 kg"}, {"nombre": "Martillo mancuernas", "series": "3x15", "peso": "4 kg"}]}, {"fecha": "2026-06-16", "dia": "Martes", "grupo": "Posteriores inferiores", "ejercicios": [{"nombre": "Camilla atrás", "series": "3x15", "peso": "20 kg"}, {"nombre": "Sumo", "series": "3x10", "peso": "12,5-15 kg"}, {"nombre": "Empuje de cadera", "series": "4x10", "peso": "15 kg c/l"}, {"nombre": "Abductores", "series": "3x12", "peso": "45 kg"}, {"nombre": "Peso muerto", "series": "3x10", "peso": "25 kg"}]}, {"fecha": "2026-06-18", "dia": "Jueves", "grupo": "Tren superior (espalda y hombros)", "ejercicios": [{"nombre": "Jalón pecho", "series": "3x10", "peso": "25 kg"}, {"nombre": "Remo polea baja", "series": "4x12", "peso": "20 kg"}, {"nombre": "Remo unilateral mancuerna", "series": "3x15", "peso": "7 kg"}, {"nombre": "Vuelo lateral (hombro)", "series": "3x10", "peso": "4 kg"}, {"nombre": "Press militar (hombro)", "series": "3x10", "peso": "4 kg c/l"}, {"nombre": "Frontal (hombro)", "series": "3x15", "peso": "5-6 kg"}]}, {"fecha": "2026-06-19", "dia": "Viernes", "grupo": "Inferiores frente", "ejercicios": [{"nombre": "Camilla cuádriceps (retención 3s)", "series": "4x8", "peso": "35 kg"}, {"nombre": "Prensa", "series": "3x10", "peso": "70 kg"}, {"nombre": "Estocadas", "series": "3x10", "peso": "7,5 kg c/l"}, {"nombre": "Aductores polea", "series": "4x15", "peso": "40 kg"}, {"nombre": "Pantorrillas máquina (retención 2s)", "series": "3x10", "peso": "15 kg"}]}, {"fecha": "2026-06-22", "dia": "Lunes", "grupo": "Inferiores posteriores", "ejercicios": [{"nombre": "Empuje de cadera", "series": "4x11-12", "peso": "30 kg"}, {"nombre": "Peso muerto", "series": "3x12", "peso": "25 kg"}, {"nombre": "Sumo", "series": "3x10", "peso": "17,5 kg"}, {"nombre": "Camilla atrás", "series": "3x15", "peso": "20 kg"}, {"nombre": "Abductores polea", "series": "4x10", "peso": "45 kg"}]}, {"fecha": "2026-06-23", "dia": "Martes", "grupo": "Tren superior", "ejercicios": [{"nombre": "Jalón al pecho (retención)", "series": "3x10", "peso": "25 kg"}, {"nombre": "Remo polea baja", "series": "4x10", "peso": "25 kg"}, {"nombre": "Remo unilateral mancuerna", "series": "3x12", "peso": "8 kg"}, {"nombre": "Martillo", "series": "3x10", "peso": "5 kg"}, {"nombre": "Bíceps concentrado", "series": "3x15", "peso": "5 kg"}]}, {"fecha": "2026-06-25", "dia": "Jueves", "grupo": "Inferiores", "ejercicios": [{"nombre": "Camilla cuádriceps (retención 3s)", "series": "4x8", "peso": "35 kg"}, {"nombre": "Prensa", "series": "4x10", "peso": "70-80 kg"}, {"nombre": "Estocadas", "series": "3x10", "peso": "8 kg c/l"}, {"nombre": "Aductores polea", "series": "4x15", "peso": "40 kg"}, {"nombre": "Pantorrillas máquina (retención 2s)", "series": "3x10", "peso": "15 kg"}]}]};
+
+/* ===========================================================
+   MÓDULO: ESTADO Y PERSISTENCIA (LocalStorage)
+   =========================================================== */
+const STORAGE_KEY = 'mirutina_v1';
+
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{ return JSON.parse(raw); }catch(e){ /* fall through */ }
+  }
+  return {
+    datos: {},
+    tema: 'dark',
+    registros: {} // { "dia_idx::ejercicio_idx": [ {fecha, peso, series, reps, obs} ] }
+  };
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE));
+}
+
+let STATE = loadState();
+
+/* ===========================================================
+   MÓDULO: NAVEGACIÓN
+   =========================================================== */
+let CURRENT_DAY_IDX = null;
+let CURRENT_EX_IDX = null;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){ showScreen('screen-home'); renderHome(); }
+function backToDay(){ showScreen('screen-day'); }
+
+function openMenu(){ document.getElementById('overlay').classList.add('open'); document.getElementById('side-menu').classList.add('open'); }
+function closeMenu(){ document.getElementById('overlay').classList.remove('open'); document.getElementById('side-menu').classList.remove('open'); }
+
+/* ===========================================================
+   MÓDULO: UTILIDADES
+   =========================================================== */
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function formatFechaCorta(fechaISO){
+  const [y,m,d] = fechaISO.split('-').map(Number);
+  return { dnum: d, dmon: MESES[m-1] };
+}
+function formatFechaLarga(fechaISO){
+  const [y,m,d] = fechaISO.split('-').map(Number);
+  return `${d} de ${MESES[m-1]}`;
+}
+function parsePesoNum(pesoStr){
+  // extrae el primer número de strings como "70-80 kg" o "7,5 kg"
+  if(typeof pesoStr === 'number') return pesoStr;
+  const match = String(pesoStr).replace(',', '.').match(/[\d.]+/g);
+  if(!match) return 0;
+  return Math.max(...match.map(Number));
+}
+function regKey(dayIdx, exIdx){ return dayIdx + '::' + exIdx; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ===========================================================
+   MÓDULO: RENDER — HOME
+   =========================================================== */
+function renderHome(){
+  const nombre = STATE.datos.nombre;
+  document.getElementById('home-greeting').textContent = nombre ? 'Hola,' : 'Bienvenido';
+  document.getElementById('home-name').textContent = nombre || 'Tu progreso';
+
+  const sesiones = RUTINA_BASE.sesiones;
+  let totalEjercicios = 0;
+  let totalMejoras = 0;
+  sesiones.forEach(s => totalEjercicios += s.ejercicios.length);
+  Object.keys(STATE.registros).forEach(k => {
+    const logs = STATE.registros[k];
+    if(logs.length >= 2){
+      const sorted = [...logs].sort((a,b)=> a.fecha.localeCompare(b.fecha));
+      if(parseFloat(sorted[sorted.length-1].peso) > parseFloat(sorted[0].peso)) totalMejoras++;
+    }
+  });
+
+  document.getElementById('stat-sesiones').textContent = sesiones.length;
+  document.getElementById('stat-ejercicios').textContent = totalEjercicios;
+  document.getElementById('stat-mejoras').textContent = totalMejoras;
+
+  const list = document.getElementById('day-list');
+  if(sesiones.length === 0){
+    list.innerHTML = `<div class="empty-state"><p>Todavía no hay rutinas cargadas.</p></div>`;
+    return;
+  }
+
+  // Ordenar de más reciente a más antiguo
+  const ordered = sesiones.map((s, idx) => ({...s, idx})).sort((a,b)=> b.fecha.localeCompare(a.fecha));
+
+  list.innerHTML = ordered.map(s => {
+    const {dnum, dmon} = formatFechaCorta(s.fecha);
+    return `
+      <div class="day-card" onclick="openDay(${s.idx})">
+        <div class="day-date"><span class="dnum">${dnum}</span><span class="dmon">${dmon}</span></div>
+        <div class="day-info">
+          <p class="dgroup">${s.grupo}</p>
+          <p class="dmeta">${s.dia} · ${s.ejercicios.length} ejercicios</p>
+        </div>
+        <svg class="day-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#8B8D93" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>`;
+  }).join('');
+}
+
+/* ===========================================================
+   MÓDULO: RENDER — DETALLE DE DÍA
+   =========================================================== */
+function openDay(idx){
+  CURRENT_DAY_IDX = idx;
+  const s = RUTINA_BASE.sesiones[idx];
+  document.getElementById('dd-title').textContent = s.grupo;
+  document.getElementById('dd-sub').textContent = `${s.dia} · ${formatFechaLarga(s.fecha)}`;
+  document.getElementById('dd-tag').textContent = s.ejercicios.length + ' ejercicios';
+
+  const list = document.getElementById('dd-ex-list');
+  list.innerHTML = s.ejercicios.map((ex, exIdx) => {
+    const key = regKey(idx, exIdx);
+    const logs = STATE.registros[key] || [];
+    let trendHTML = '';
+    if(logs.length > 0){
+      const sorted = [...logs].sort((a,b)=> a.fecha.localeCompare(b.fecha));
+      const last = sorted[sorted.length-1];
+      const base = parsePesoNum(ex.peso);
+      const isUp = parseFloat(last.peso) > base;
+      trendHTML = `<span class="ex-trend ${isUp?'up':'flat'}">${isUp?'↑ ':''}${last.peso} kg</span>`;
+    }
+    return `
+      <div class="ex-card" onclick="openExercise(${idx}, ${exIdx})">
+        <svg class="ex-dumbbell" width="22" height="22" viewBox="0 0 48 48"><rect fill="var(--accent)" x="14" y="21" width="20" height="6" rx="1"/><rect fill="var(--text-dim)" x="4" y="14" width="8" height="20" rx="2"/><rect fill="var(--text-dim)" x="36" y="14" width="8" height="20" rx="2"/></svg>
+        <div class="ex-info">
+          <p class="ex-name">${ex.nombre}</p>
+          <div class="ex-meta"><span><b>${ex.series}</b></span><span><b>${ex.peso}</b></span></div>
+        </div>
+        ${trendHTML}
+      </div>`;
+  }).join('');
+
+  showScreen('screen-day');
+}
+
+/* ===========================================================
+   MÓDULO: RENDER — FICHA DE EJERCICIO + GRÁFICO + HISTORIAL
+   =========================================================== */
+function openExercise(dayIdx, exIdx){
+  CURRENT_DAY_IDX = dayIdx;
+  CURRENT_EX_IDX = exIdx;
+  const s = RUTINA_BASE.sesiones[dayIdx];
+  const ex = s.ejercicios[exIdx];
+
+  document.getElementById('ex-back-label').textContent = s.grupo;
+  document.getElementById('ex-title').textContent = ex.nombre;
+  document.getElementById('ex-base').textContent = `Base de rutina: ${ex.series} · ${ex.peso}`;
+
+  renderExerciseChartAndLog(dayIdx, exIdx, ex);
+  showScreen('screen-exercise');
+}
+
+function getExerciseHistory(dayIdx, exIdx, ex){
+  const key = regKey(dayIdx, exIdx);
+  const logs = STATE.registros[key] || [];
+  // Incluir el punto base de la rutina como primer punto de referencia
+  const basePoint = { fecha: RUTINA_BASE.sesiones[dayIdx].fecha, peso: parsePesoNum(ex.peso), series: ex.series, reps: '', obs: '', isBase: true };
+  const userPoints = logs.map(l => ({...l, peso: parseFloat(String(l.peso).replace(',','.')) }));
+  const all = [basePoint, ...userPoints].sort((a,b)=> a.fecha.localeCompare(b.fecha));
+  return all;
+}
+
+function renderExerciseChartAndLog(dayIdx, exIdx, ex){
+  const history = getExerciseHistory(dayIdx, exIdx, ex);
+  const chartEl = document.getElementById('ex-chart');
+  const logEl = document.getElementById('ex-log-list');
+
+  // --- Gráfico SVG simple de línea ---
+  const W = 460, H = 140, PAD = 24;
+  const pesos = history.map(h => h.peso);
+  const min = Math.min(...pesos) * 0.92;
+  const max = Math.max(...pesos) * 1.08;
+  const range = (max - min) || 1;
+
+  const pts = history.map((h, i) => {
+    const x = history.length === 1 ? W/2 : PAD + (i / (history.length - 1)) * (W - PAD*2);
+    const y = H - PAD - ((h.peso - min) / range) * (H - PAD*2);
+    return {x, y, peso: h.peso};
+  });
+
+  const pathD = pts.map((p,i)=> (i===0?'M':'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ');
+  const areaD = pathD + ` L ${pts[pts.length-1].x.toFixed(1)} ${H-PAD} L ${pts[0].x.toFixed(1)} ${H-PAD} Z`;
+
+  const circles = pts.map((p,i) => {
+    const isLast = i === pts.length - 1;
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isLast?5:3.5}" fill="${isLast?'var(--accent)':'#F2F1ED'}" stroke="var(--bg-card)" stroke-width="2"/>`;
+  }).join('');
+
+  if(history.length < 2){
+    chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><text x="${W/2}" y="${H/2}" fill="var(--text-dim)" font-size="13" text-anchor="middle">Registrá tu avance para ver el gráfico</text></svg>`;
+  } else {
+    chartEl.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FF5A1F" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#FF5A1F" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaD}" fill="url(#areaGrad)"/>
+        <path d="${pathD}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        ${circles}
+      </svg>`;
+  }
+
+  // --- Lista de historial (más reciente primero) ---
+  const reversedWithFlag = [...history].reverse();
+  const maxPeso = Math.max(...history.map(h=>h.peso));
+
+  if(history.length === 1){
+    logEl.innerHTML = `<div class="empty-state"><p>Todavía no registraste avances de este ejercicio. Tocá el botón de abajo para anotar tu primera marca.</p></div>`;
+  } else {
+    logEl.innerHTML = reversedWithFlag.map(h => {
+      const {dnum, dmon} = formatFechaCorta(h.fecha);
+      const isBest = h.peso === maxPeso && !h.isBase;
+      return `
+        <div class="log-item ${isBest?'is-best':''}">
+          <div class="log-date"><b>${dnum}</b>${dmon}</div>
+          <div class="log-data">
+            <div><span>Peso</span><b>${h.peso} kg</b></div>
+            <div><span>Series</span><b>${h.series || '—'}</b></div>
+            ${h.reps ? `<div><span>Reps</span><b>${h.reps}</b></div>` : ''}
+            ${h.isBase ? '<div><span>Origen</span><b>Rutina base</b></div>' : ''}
+            ${h.obs ? `<div class="log-note">"${h.obs}"</div>` : ''}
+          </div>
+          ${isBest ? '<span class="star-badge">⭐</span>' : ''}
+        </div>`;
+    }).join('');
+  }
+}
+
+/* ===========================================================
+   MÓDULO: REGISTRO DE AVANCE (modal)
+   =========================================================== */
+function openRegisterModal(){
+  const s = RUTINA_BASE.sesiones[CURRENT_DAY_IDX];
+  const ex = s.ejercicios[CURRENT_EX_IDX];
+  document.getElementById('modal-ex-name').textContent = ex.nombre;
+  document.getElementById('modal-ex-base').textContent = `Última marca: ${ex.series} · ${ex.peso}`;
+  document.getElementById('r-peso').value = '';
+  document.getElementById('r-series').value = '';
+  document.getElementById('r-reps').value = '';
+  document.getElementById('r-obs').value = '';
+  document.getElementById('r-fecha').value = todayISO();
+  document.getElementById('modal-register').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal-register').classList.remove('open'); }
+
+function saveRegistro(){
+  const peso = document.getElementById('r-peso').value;
+  const series = document.getElementById('r-series').value;
+  const reps = document.getElementById('r-reps').value;
+  const obs = document.getElementById('r-obs').value.trim();
+  const fecha = document.getElementById('r-fecha').value || todayISO();
+
+  if(!peso){
+    showToast('Ingresá el peso utilizado');
+    return;
+  }
+
+  const key = regKey(CURRENT_DAY_IDX, CURRENT_EX_IDX);
+  if(!STATE.registros[key]) STATE.registros[key] = [];
+  STATE.registros[key].push({ fecha, peso, series, reps, obs });
+  saveState();
+  closeModal();
+  showToast('✓ Avance registrado');
+
+  const ex = RUTINA_BASE.sesiones[CURRENT_DAY_IDX].ejercicios[CURRENT_EX_IDX];
+  renderExerciseChartAndLog(CURRENT_DAY_IDX, CURRENT_EX_IDX, ex);
+}
+
+/* ===========================================================
+   MÓDULO: MIS DATOS
+   =========================================================== */
+function loadDatosForm(){
+  const d = STATE.datos;
+  document.getElementById('d-nombre').value = d.nombre || '';
+  document.getElementById('d-edad').value = d.edad || '';
+  document.getElementById('d-sexo').value = d.sexo || '';
+  document.getElementById('d-altura').value = d.altura || '';
+  document.getElementById('d-peso').value = d.peso || '';
+  document.getElementById('d-objetivo').value = d.objetivo || '';
+  document.getElementById('d-nivel').value = d.nivel || '';
+  document.getElementById('d-fecha').value = d.fecha || '';
+}
+function saveDatos(){
+  STATE.datos = {
+    nombre: document.getElementById('d-nombre').value,
+    edad: document.getElementById('d-edad').value,
+    sexo: document.getElementById('d-sexo').value,
+    altura: document.getElementById('d-altura').value,
+    peso: document.getElementById('d-peso').value,
+    objetivo: document.getElementById('d-objetivo').value,
+    nivel: document.getElementById('d-nivel').value,
+    fecha: document.getElementById('d-fecha').value,
+  };
+  saveState();
+}
+
+/* ===========================================================
+   MÓDULO: CONFIGURACIÓN / TEMA
+   =========================================================== */
+function setTheme(theme){
+  STATE.tema = theme;
+  saveState();
+  applyTheme();
+  document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === theme));
+}
+function applyTheme(){
+  const theme = STATE.tema || 'dark';
+  let effective = theme;
+  if(theme === 'auto'){
+    effective = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  if(effective === 'light'){
+    document.documentElement.style.setProperty('--bg', '#F4F2EE');
+    document.documentElement.style.setProperty('--bg-card', '#FFFFFF');
+    document.documentElement.style.setProperty('--bg-card-hover', '#ECEAE4');
+    document.documentElement.style.setProperty('--line', '#E2DFD8');
+    document.documentElement.style.setProperty('--text', '#1B1C1F');
+    document.documentElement.style.setProperty('--text-dim', '#6B6D72');
+  } else {
+    document.documentElement.style.setProperty('--bg', '#16181D');
+    document.documentElement.style.setProperty('--bg-card', '#1E2128');
+    document.documentElement.style.setProperty('--bg-card-hover', '#262A33');
+    document.documentElement.style.setProperty('--line', '#2C2F38');
+    document.documentElement.style.setProperty('--text', '#F2F1ED');
+    document.documentElement.style.setProperty('--text-dim', '#8B8D93');
+  }
+}
+
+/* ===========================================================
+   MÓDULO: COMPARTIR / EXPORTAR A PDF
+   Usa la función de impresión del navegador ("Guardar como PDF").
+   Si el dispositivo soporta Web Share API, también permite
+   compartir directamente por WhatsApp, correo, etc.
+   =========================================================== */
+function nombreUsuarioOInvitado(){
+  return STATE.datos.nombre ? STATE.datos.nombre : 'Invitado';
+}
+
+function buildPrintHeader(titulo, subtitulo){
+  return `
+    <h1>${titulo}</h1>
+    <p class="p-sub">${subtitulo} · Generado por ${nombreUsuarioOInvitado()} · ${new Date().toLocaleDateString('es-AR')}</p>
+  `;
+}
+
+function printAndMaybeShare(html, filenameSuggestion){
+  const area = document.getElementById('print-area');
+  area.innerHTML = html + `<p class="p-footer">Generado con Mi Rutina · ${filenameSuggestion}</p>`;
+
+  // Disparamos la impresión del navegador (permite "Guardar como PDF")
+  window.print();
+}
+
+/* Modal de elección: Compartir (Web Share API) vs Descargar PDF (impresión) */
+let PENDING_SHARE_ACTION = null;
+let PENDING_PDF_ACTION = null;
+
+function openShareChoice(shareFn, pdfFn){
+  PENDING_SHARE_ACTION = shareFn;
+  PENDING_PDF_ACTION = pdfFn;
+  document.getElementById('modal-share').classList.add('open');
+}
+function closeShareChoice(){
+  document.getElementById('modal-share').classList.remove('open');
+}
+function confirmShareChoice(tipo){
+  closeShareChoice();
+  if(tipo === 'share' && PENDING_SHARE_ACTION) PENDING_SHARE_ACTION();
+  if(tipo === 'pdf' && PENDING_PDF_ACTION) PENDING_PDF_ACTION();
+}
+
+function shareDay(){
+  const s = RUTINA_BASE.sesiones[CURRENT_DAY_IDX];
+  let rows = s.ejercicios.map(ex => `
+    <tr>
+      <td>${ex.nombre}</td>
+      <td>${ex.series}</td>
+      <td>${ex.peso}</td>
+    </tr>`).join('');
+
+  const html = `
+    ${buildPrintHeader(s.grupo, `${s.dia} · ${formatFechaLarga(s.fecha)}`)}
+    <table>
+      <thead><tr><th>Ejercicio</th><th>Series</th><th>Peso</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  if(navigator.share){
+    const resumen = `${s.grupo} (${s.dia} ${formatFechaLarga(s.fecha)}):\n` +
+      s.ejercicios.map(ex => `• ${ex.nombre}: ${ex.series} · ${ex.peso}`).join('\n');
+    openShareChoice(
+      () => navigator.share({ title: `Rutina: ${s.grupo}`, text: resumen }).catch(()=>{}),
+      () => printAndMaybeShare(html, `rutina-${s.fecha}`)
+    );
+  } else {
+    printAndMaybeShare(html, `rutina-${s.fecha}`);
+  }
+}
+
+function shareExercise(){
+  const dayIdx = CURRENT_DAY_IDX, exIdx = CURRENT_EX_IDX;
+  const s = RUTINA_BASE.sesiones[dayIdx];
+  const ex = s.ejercicios[exIdx];
+  const history = getExerciseHistory(dayIdx, exIdx, ex);
+  const maxPeso = Math.max(...history.map(h => h.peso));
+
+  let rows = history.map(h => {
+    const isBest = h.peso === maxPeso && !h.isBase;
+    return `
+    <tr class="${isBest ? 'p-best' : ''}">
+      <td>${formatFechaLarga(h.fecha)}</td>
+      <td>${h.peso} kg</td>
+      <td>${h.series || '—'}</td>
+      <td>${h.reps || '—'}</td>
+      <td>${h.obs || (h.isBase ? 'Rutina base' : '—')}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    ${buildPrintHeader(ex.nombre, `Historial de avance · Base: ${ex.series} · ${ex.peso}`)}
+    <table>
+      <thead><tr><th>Fecha</th><th>Peso</th><th>Series</th><th>Reps</th><th>Observaciones</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  const filename = `${ex.nombre.replace(/\s+/g,'-')}-historial`;
+
+  if(navigator.share){
+    const ultimos = history.slice(-5).map(h => `• ${formatFechaLarga(h.fecha)}: ${h.peso} kg · ${h.series||'—'}`).join('\n');
+    const resumen = `Progreso en ${ex.nombre}:\n${ultimos}`;
+    openShareChoice(
+      () => navigator.share({ title: `Progreso: ${ex.nombre}`, text: resumen }).catch(()=>{}),
+      () => printAndMaybeShare(html, filename)
+    );
+  } else {
+    printAndMaybeShare(html, filename);
+  }
+}
+
+
+function confirmClearAll(){ document.getElementById('modal-confirm').classList.add('open'); }
+function closeConfirm(){ document.getElementById('modal-confirm').classList.remove('open'); }
+function executeClearAll(){
+  localStorage.removeItem(STORAGE_KEY);
+  STATE = { datos:{}, tema:'dark', registros:{} };
+  closeConfirm();
+  applyTheme();
+  loadDatosForm();
+  goHome();
+  showToast('Datos eliminados');
+}
+
+/* ===========================================================
+   MÓDULO: BOTÓN FLOTANTE DE REGISTRO (se muestra solo en ficha de ejercicio)
+   =========================================================== */
+function injectFab(){
+  const fab = document.createElement('button');
+  fab.className = 'fab-register';
+  fab.id = 'fab-register';
+  fab.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg> Registrar avance de hoy`;
+  fab.onclick = openRegisterModal;
+  document.body.appendChild(fab);
+}
+
+/* Mostrar/ocultar FAB según pantalla activa */
+const observer = new MutationObserver(() => {
+  const exActive = document.getElementById('screen-exercise').classList.contains('active');
+  const fab = document.getElementById('fab-register');
+  if(fab) fab.style.display = exActive ? 'flex' : 'none';
+});
+observer.observe(document.getElementById('screen-exercise'), { attributes:true, attributeFilter:['class'] });
+
+/* ===========================================================
+   MÓDULO: PWA — manifest + favicon (logo mancuerna) generados como data URI
+   =========================================================== */
+function setupPWA(){
+  const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+      <rect width="48" height="48" rx="10" fill="#16181D"/>
+      <rect x="14" y="21" width="20" height="6" rx="1" fill="#FF5A1F"/>
+      <rect x="4" y="14" width="8" height="20" rx="2" fill="#F2F1ED"/>
+      <rect x="36" y="14" width="8" height="20" rx="2" fill="#F2F1ED"/>
+    </svg>`;
+  const iconURL = 'data:image/svg+xml;base64,' + btoa(svgIcon);
+
+  // Favicon
+  const favLink = document.createElement('link');
+  favLink.rel = 'icon';
+  favLink.href = iconURL;
+  document.head.appendChild(favLink);
+
+  // Apple touch icon
+  document.getElementById('apple-touch-icon').href = iconURL;
+
+  // Manifest embebido
+  const manifest = {
+    name: "Mi Rutina",
+    short_name: "Mi Rutina",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#16181D",
+    theme_color: "#16181D",
+    icons: [{ src: iconURL, sizes: "48x48", type: "image/svg+xml" }]
+  };
+  const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+}
+
+/* ===========================================================
+   INICIALIZACIÓN
+   =========================================================== */
+function init(){
+  applyTheme();
+  document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === (STATE.tema||'dark')));
+  loadDatosForm();
+  injectFab();
+  setupPWA();
+  renderHome();
+}
+init();
+</script>
+</body>
+</html>
