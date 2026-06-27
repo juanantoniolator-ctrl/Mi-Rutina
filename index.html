@@ -65,13 +65,20 @@ a{color:var(--accent);}
 }
 .brand{display:flex; align-items:center; gap:10px;}
 .brand-name{font-size:15px; letter-spacing:0.12em; color:var(--text-dim);}
+.version-tag{
+  font-size:10px; color:var(--text-dim); background:var(--bg-card); border:1px solid var(--line);
+  padding:2px 7px; border-radius:10px; letter-spacing:0.03em;
+}
 .icon-btn{
   width:48px; height:48px; min-width:48px; display:flex; align-items:center; justify-content:center;
   border-radius:50%; transition:background .15s ease;
 }
 .icon-btn:active{background:var(--bg-card-hover);}
-.topbar .icon-btn:first-child{margin-left:-4px;}
-.topbar .icon-btn:last-child{margin-right:-4px;}
+.icon-btn-menu{
+  width:56px; height:56px; min-width:56px; margin-right:-6px;
+  background:var(--bg-card); border:1px solid var(--line);
+}
+.icon-btn-menu:active{background:var(--bg-card-hover); transform:scale(0.96);}
 
 main{flex:1; padding:0 18px 100px;}
 
@@ -322,15 +329,13 @@ main{flex:1; padding:0 18px 100px;}
 
   <!-- ============ TOPBAR ============ -->
   <div class="topbar">
-    <button class="icon-btn" onclick="openMenu()" aria-label="Abrir menú">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="#F2F1ED" stroke-width="2.3" stroke-linecap="round"/></svg>
-    </button>
     <div class="brand">
       <svg class="logo-mark" width="26" height="26" viewBox="0 0 48 48"><rect class="bar" x="14" y="21" width="20" height="6" rx="1"/><rect class="plate" x="4" y="14" width="8" height="20" rx="2"/><rect class="plate" x="36" y="14" width="8" height="20" rx="2"/></svg>
       <span class="brand-name">MI RUTINA</span>
+      <span class="version-tag" id="version-tag">v2.0</span>
     </div>
-    <button class="icon-btn" onclick="showScreen('screen-config')" aria-label="Configuración">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#F2F1ED" stroke-width="2"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V19a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 13a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 7a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 008.92 2.6a1.65 1.65 0 001-1.51V1a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 7a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="#F2F1ED" stroke-width="1.6"/></svg>
+    <button class="icon-btn icon-btn-menu" onclick="openMenu()" aria-label="Abrir menú y configuración">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#F2F1ED" stroke-width="2"/><path d="M19.4 13a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V19a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 13a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 7a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 008.92 2.6a1.65 1.65 0 001-1.51V1a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 7a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="#F2F1ED" stroke-width="1.6"/></svg>
     </button>
   </div>
 
@@ -466,7 +471,7 @@ main{flex:1; padding:0 18px 100px;}
 <nav class="side-menu" id="side-menu">
   <div class="sm-head">
     <svg class="logo-mark" width="32" height="32" viewBox="0 0 48 48"><rect class="bar" x="14" y="21" width="20" height="6" rx="1"/><rect class="plate" x="4" y="14" width="8" height="20" rx="2"/><rect class="plate" x="36" y="14" width="8" height="20" rx="2"/></svg>
-    <div><div class="sm-name">Mi Rutina</div><div class="sm-sub">Consulta y progreso</div></div>
+    <div><div class="sm-name">Mi Rutina</div><div class="sm-sub">Consulta y progreso · <span id="version-tag-menu">v2.0</span></div></div>
   </div>
   <button class="sm-item" onclick="goHome(); closeMenu();">🏠 &nbsp;Inicio</button>
   <button class="sm-item" onclick="showScreen('screen-datos'); closeMenu();">🧍 &nbsp;Mis datos</button>
@@ -534,6 +539,12 @@ const RUTINA_BASE = {"sesiones": [{"fecha": "2026-06-08", "dia": "Lunes", "grupo
 /* ===========================================================
    MÓDULO: ESTADO Y PERSISTENCIA (LocalStorage)
    =========================================================== */
+/* ===========================================================
+   VERSIÓN DE LA APP — actualizar este número en cada cambio
+   para que sea fácil confirmar que la última versión cargó bien.
+   =========================================================== */
+const APP_VERSION = 'v2.0';
+
 const STORAGE_KEY = 'mirutina_v1';
 
 function loadState(){
@@ -1063,6 +1074,8 @@ function setupPWA(){
    INICIALIZACIÓN
    =========================================================== */
 function init(){
+  document.getElementById('version-tag').textContent = APP_VERSION;
+  document.getElementById('version-tag-menu').textContent = APP_VERSION;
   applyTheme();
   document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === (STATE.tema||'dark')));
   loadDatosForm();
