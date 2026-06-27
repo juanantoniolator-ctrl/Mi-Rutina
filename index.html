@@ -59,7 +59,7 @@ a{color:var(--accent);}
 
 .topbar{
   display:flex; align-items:center; justify-content:space-between;
-  padding:16px 18px 10px;
+  padding:calc(env(safe-area-inset-top) + 18px) 18px 10px;
   position:sticky; top:0; z-index:20;
   background:linear-gradient(to bottom, var(--bg) 80%, transparent);
 }
@@ -543,7 +543,7 @@ const RUTINA_BASE = {"sesiones": [{"fecha": "2026-06-08", "dia": "Lunes", "grupo
    VERSIÓN DE LA APP — actualizar este número en cada cambio
    para que sea fácil confirmar que la última versión cargó bien.
    =========================================================== */
-const APP_VERSION = 'v2.0';
+const APP_VERSION = 'v2.1';
 
 const STORAGE_KEY = 'mirutina_v1';
 
